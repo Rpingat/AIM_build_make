@@ -1,4 +1,4 @@
-# Put some miscellaneous rules here
+	# Put some miscellaneous rules here
 
 # HACK: clear LOCAL_PATH from including last build target before calling
 # intermedites-dir-for
@@ -268,6 +268,7 @@ endif
 	$(hide) TARGET_BUILD_TYPE="$(TARGET_BUILD_VARIANT)" \
 			TARGET_BUILD_FLAVOR="$(TARGET_BUILD_FLAVOR)" \
 			TARGET_DEVICE="$(TARGET_DEVICE)" \
+                        AIM_DEVICE="$(TARGET_DEVICE)" \
 			PRODUCT_NAME="$(TARGET_PRODUCT)" \
 			PRODUCT_BRAND="$(PRODUCT_BRAND)" \
 			PRODUCT_DEFAULT_LOCALE="$(call get-default-product-locale,$(PRODUCT_LOCALES))" \
@@ -2712,7 +2713,10 @@ else
     OTA_SCRIPT_OVERRIDE_DEVICE := $(TARGET_OTA_ASSERT_DEVICE)
 endif
 
-ifneq ($(CUSTOM_BUILD),)
+ifneq ($(BLOCK_BASED_OTA),false)
+    $(INTERNAL_OTA_PACKAGE_TARGET): block_based := --block
+endif
+ifneq ($(AIM_BUILD),)
     $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := true
 else
     $(INTERNAL_OTA_PACKAGE_TARGET): backuptool := false
@@ -2730,10 +2734,11 @@ $(INTERNAL_OTA_PACKAGE_TARGET): $(BUILT_TARGET_FILES_PACKAGE) \
 	   $(if $(OEM_OTA_CONFIG), -o $(OEM_OTA_CONFIG)) \
 	   $(BUILT_TARGET_FILES_PACKAGE) $@
 
-CUSTOM_TARGET_PACKAGE := $(PRODUCT_OUT)/AIMROM-$(AIM_VERSION).zip
+CUSTOM_TARGET_PACKAGE := $(PRODUCT_OUT)/$(AIM_VERSION).zip
 
-.PHONY: otapackage bacon
+.PHONY: otapackage aim bacon
 otapackage: $(INTERNAL_OTA_PACKAGE_TARGET)
+aim: bacon
 bacon: otapackage
 	$(hide) ln -f $(INTERNAL_OTA_PACKAGE_TARGET) $(CUSTOM_TARGET_PACKAGE)
 	$(hide) $(MD5SUM) $(CUSTOM_TARGET_PACKAGE) | sed "s|$(PRODUCT_OUT)/||" > $(CUSTOM_TARGET_PACKAGE).md5sum
